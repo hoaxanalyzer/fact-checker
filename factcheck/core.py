@@ -61,11 +61,11 @@ class WikipediaCheck:
 		st = self._the_stops(cl).split()
 
 		negate = False
-		if self.__is_intersect(WikipediaCheck.synonyms_negation, self.query):
+		if self.__is_intersect(WikipediaCheck.synonyms_negation, (self.query).split()):
 			negate = True
 
 		if (len(self.query_clean.split()) < 4) or \
-			(len(ne) != 0 and len(le) <= 10 and len(st) <= 3):
+			(len(ne) != 0 and len(le) <= 10 and len(st) <= 4):
 			quer = self._build_query()
 			print("Q: " + quer)
 			wiki = sources.Wikipedia(quer, 3)

@@ -25,8 +25,15 @@ class Wikipedia:
 		return self.bundle
 
 	def _get_pages(self, response, count):
-		result = response["query"]["search"]
 		pages = []
+		## Check for suggestion
+		try:
+			suggest = response["query"]["searchinfo"]
+			pages.append((suggest["suggestion"], None))
+		except:
+			None
+		## Check for result
+		result = response["query"]["search"]
 		while (len(pages) < count) and (len(pages) != len(result)):
 			title = result[len(pages)]["title"]
 			try:
@@ -61,16 +68,17 @@ class Wikipedia:
 		return data["extract"]
 
 	def _search(self, query):
-		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'list': 'search', 'srprop': 'redirecttitle', 'srsearch': query})
+		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'list': 'search', 'srprop': 'redirecttitle', 'srinfo':'suggestion', 'srsearch': query})
 		url = Wikipedia.api_url	% params
 		return self.__call_api(params)
 
 	def _categorize(self, page_name):
-		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'categories', 'clshow': '!hidden', 'cllimit': '100', 'titles': page_name})
-		return self.__call_api(params)
+		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'categories', 'clshow': '!hidden', 'cllimit': '100', 'redirects':'', 'titles': page_name})
+		result = self.__call_api(params)
+		return result
 
 	def _extract(self, page_name):
-		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'extracts', 'exintro': '', 'explaintext': '', 'titles': page_name})
+		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'extracts', 'exintro': '', 'explaintext': '', 'redirects':'', 'titles': page_name})
 		return self.__call_api(params)
 
 	def __call_api(self, params):
