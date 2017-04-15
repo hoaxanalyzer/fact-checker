@@ -92,12 +92,14 @@ class WikipediaCheck:
 				# self._check_content(page)
 				print("Checking: " + str(page["name"]))
 				ccat = self._check_category(page)
+				logging.info("Finish Check Category")
 				# print(ccat)
 				if ccat[0] < 3:
 					return ccat + (negate,)
 				if ccat[0] == 9:
 					fact_claims.extend(ccat[1])
 				## No conclusion, check content
+				logging.info("No Conlculsion, Check content")
 				ccon = self._check_content(page)
 				if ccon[0] == 8 or ccon[0] == 7:
 					return ccon + (negate,)
@@ -219,13 +221,16 @@ class WikipediaCheck:
 		return in_page or in_redirect
 
 	def _check_category(self, page):
+		logging.info("Start Check Category")
 		querywords = self.query_stemmed.split()
 		querywords_nopage = self.__difference(querywords, [x.lower() for x in page["name"].split()])
-		categories = [x.lower() for x in page["categories"]]
+		logging.info("Finish Init Check Category")
 
 		correct_claims = []
 
-		for category in categories:
+		for category in page["categories"]:
+			logging.info("Iterating on " + category)
+			category = category.lower()
 			## DEATH
 			if self.about_death:
 				if "living" in category:
