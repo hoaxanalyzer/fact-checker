@@ -31,16 +31,13 @@ def index():
 	return "Hoax Analyzer - Query FactChecker API"
 
 @application.route("/check", methods=['POST'])
-def extract_text():
-	try:
-		text = request.json['text']
-		wc = factcheck.WikipediaCheck(text)
-		result = {}
-		result["code"], result["details"], result["is_negate"] = wc.check()
-		logging.info("Finish wiki.check")
-		result = json.dumps(result)
-	except Exception as e:
-		result = json.dumps({"status": "Failed", "message": "Incorrect parameters", "details": str(e)})
+def check():
+	text = request.json['text']
+	wc = factcheck.WikipediaCheck(text)
+	result = {}
+	result["code"], result["details"], result["is_negate"] = wc.check()
+	logging.info("Finish wiki.check")
+	result = json.dumps(result)
 	return result
 
 @application.after_request

@@ -84,13 +84,9 @@ class WikipediaCheck:
 				fact_claims = []
 				found_page = False
 
-				#for page in self.result:
-				#	if (not found_page) and self._check_title(page):
-
 				page = wiki.get_meta(self.result[self._get_best_title(self.result)])
 
-				# self._check_content(page)
-				print("Checking: " + str(page["name"]))
+				logging.info("Start Check Category X")
 				ccat = self._check_category(page)
 				logging.info("Finish Check Category")
 				# print(ccat)
@@ -187,25 +183,31 @@ class WikipediaCheck:
 		return ne_prob
 
 	def _get_best_title(self, pages):
+		logging.info("Start get best title")
 		querywords = self.query_stemmed.split()
 		highest_score = 0
 		idx = 0
 		count = 0
 		for page in pages:
+			logging.info("Cekin page: " + str(page))
 			pagename = self._clean_query(page["name"]).split()
 			in_page = self.__intersect(querywords, [x.lower() for x in pagename])
 			score = len(in_page) / len(pagename)
+			logging.info("Gettin' Score")
 			if score > highest_score:
 				highest_score = score
 				idx = count
 			if page["redirect"] != None:
+				logging.info("Cekin redirect: " + page["redirect"])
 				rediname = self._clean_query(page["redirect"]).split()
 				re_page = self.__intersect(querywords, [x.lower() for x in rediname])
 				rscore = len(re_page) / len(rediname)
+				logging.info("Gettin' Score")
 				if rscore > highest_score:
 					highest_score = rscore
 					idx = count
 			count += 1
+		logging.info("Finish get best title")
 		return idx
 
 	def _check_title(self, page):
