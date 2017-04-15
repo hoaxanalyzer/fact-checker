@@ -3,12 +3,16 @@ import urllib.parse
 import json
 import logging
 import threading
-import queue
+import multiprocessing as mp
+from multiprocessing import Queue
+import requests
 
 def call_api(params):
-	url = "https://en.wikipedia.org/w/api.php?%s"	% params
-	with urllib.request.urlopen(url) as f:
-		return json.loads(f.read().decode('utf-8'))
+	result = requests.get("https://en.wikipedia.org/w/api.php?%s" % params)
+	return json.loads(result.content.decode('utf-8'))
+	# url = "https://en.wikipedia.org/w/api.php?%s"	% params
+	# with urllib.request.urlopen(url) as f:
+	# 	return json.loads(f.read().decode('utf-8'))
 
 class Wikipedia:
 	api_url = "https://en.wikipedia.org/w/api.php?%s"
@@ -37,19 +41,19 @@ class Wikipedia:
 		page["name"] = target["name"]
 		page["redirect"] = target["redirect"]
 
-		the_queue = queue.Queue()
+		the_queue = Queue()
 
-		thread_c = threading.Thread(self._categorize(page["name"], the_queue))
-		thread_e = threading.Thread(self._extract(page["name"], the_queue))
-
+		thread_c = mp.Process(target=self._categorize, args=(page["name"], the_queue,))
 		thread_c.start()
-		thread_e.start()
 
-		thread_c.join()
-		thread_e.join()
+		thread_e = mp.Process(target=self._extract, args=(page["name"], the_queue,))
+		thread_e.start()
 
 		categ = None
 		extrc = None
+
+		thread_c.join()
+		thread_e.join()
 
 		## HACK HACK HACK
 		result1 = json.loads(the_queue.get())
@@ -114,25 +118,29 @@ class Wikipedia:
 		return data["extract"]
 
 	def _search(self, query):
-		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'list': 'search', 'srprop': 'redirecttitle', 'srinfo':'suggestion', 'srsearch': query})
-		url = Wikipedia.api_url	% params
+		# params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'list': 'search', 'srprop': 'redirecttitle', 'srinfo':'suggestion', 'srsearch': query})
+		params = 'format=json&action=query&list=search&srprop=redirecttitle&srinfo=suggestion&srsearch=' + query
 		return call_api(params)
 
 	def _categorize(self, page_name, queue_out):
 		logging.info("Starting get data categorize...")
-		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'categories', 'clshow': '!hidden', 'cllimit': '100', 'redirects':'', 'titles': page_name})
+		# params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'categories', 'clshow': '!hidden', 'cllimit': '100', 'redirects':'', 'titles': page_name})
+		params = 'format=json&action=query&prop=categories&clshow=!hidden&cllimit=100&redirects=&titles=' + page_name
 		result = call_api(params)
 		result["data_type"] = "categories"
 		# return result
 		queue_out.put(json.dumps(result))
+		logging.info("Finish get data categorize...")
 
 	def _extract(self, page_name, queue_out):
 		logging.info("Starting get data extract...")
-		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'extracts', 'exintro': '', 'explaintext': '', 'redirects':'', 'titles': page_name})
+		# params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'extracts', 'exintro': '', 'explaintext': '', 'redirects':'', 'titles': page_name})
+		params = 'format=json&action=query&prop=extracts&exintro=&explaintext=&redirects=&titles=' + page_name
 		result = call_api(params)
 		result["data_type"] = "extract"
 		# return result
 		queue_out.put(json.dumps(result))
+		logging.info("Finish get data extract...")
 
 def get_postag(sentence):
 	text = nltk.word_tokenize(sentence)
