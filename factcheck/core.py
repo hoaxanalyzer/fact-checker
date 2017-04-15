@@ -52,8 +52,6 @@ class WikipediaCheck:
 		self.about_death = False
 		self.about_clarify = False
 
-		print(self.query_clean)
-
 	def check(self):
 		cl = self.query
 		ne = self.properties_bne
@@ -70,7 +68,6 @@ class WikipediaCheck:
 			print("Q: " + quer)
 			wiki = sources.Wikipedia(quer, 3)
 			self.result = wiki.results()
-			print(len(self.result))
 
 			if (len(self.result) > 0):
 				fact_claims = []
@@ -248,27 +245,22 @@ class WikipediaCheck:
 				found = []
 				for check in to_check:
 					if (not check.isdigit()) and check in sencheck:
-						print("c: " + check + " !")
 						found.append(check)
 				perct = len(found)/len(to_check)
-				print(perct)
 				if len(self.properties_bne) > 0:
-					print((len(self.__intersect(self.properties_bne, found))/len(self.properties_bne)))
 					if (perct >= 0.6) and \
 						((len(self.__intersect(self.properties_bne, found))/len(self.properties_bne)) >= 0.3):
-						print(sentence)
 						found_sentences.append(sentence)
 				else:
 					if (perct >= 0.6):
 						found_sentences.append(sentence)
-				print("===")
 			if len(found_sentences) > 0:
 				sen_code = 8
 				## Check for Hoax related words
 				for sentence in found_sentences:
 					if (self.__is_intersect(sentence.split(), hoax_word)):
 						sen_code = 7
-				return (sen_code, "Found: " + str(found_sentences))
+				return (sen_code, str(found_sentences))
 
 		return (3, 'Nothing in content')
 
