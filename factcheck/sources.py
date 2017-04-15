@@ -10,9 +10,6 @@ import requests
 def call_api(params):
 	result = requests.get("https://en.wikipedia.org/w/api.php?%s" % params)
 	return json.loads(result.content.decode('utf-8'))
-	# url = "https://en.wikipedia.org/w/api.php?%s"	% params
-	# with urllib.request.urlopen(url) as f:
-	# 	return json.loads(f.read().decode('utf-8'))
 
 class Wikipedia:
 	api_url = "https://en.wikipedia.org/w/api.php?%s"
@@ -27,10 +24,6 @@ class Wikipedia:
 			page = {}
 			page["name"] = p
 			page["redirect"] = r
-			#result = self._categorize(p)
-			#categories = self._get_categories(result)
-			#page["categories"] = categories
-			#page["content"] = self._get_extract(p)
 			self.bundle.append(page)
 
 	def results(self):
@@ -66,12 +59,6 @@ class Wikipedia:
 
 		page["categories"] = self._get_categories(categ)
 		page["content"] = self._get_extract(extrc)
-
-		# result = self._categorize(page["name"])
-		# categories = self._get_categories(result)
-		# page["categories"] = categories
-		# extracted = self._extract(page["name"])
-		# page["content"] = self._get_extract(extracted)
 		return page
 
 	def _get_pages(self, response, count):

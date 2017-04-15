@@ -279,7 +279,7 @@ class WikipediaCheck:
 				for sentence in found_sentences:
 					if (self.__is_intersect(sentence.split(), hoax_word)):
 						sen_code = 7
-				return (sen_code, str(found_sentences))
+				return (sen_code, found_sentences)
 
 		return (3, 'Nothing in content')
 
