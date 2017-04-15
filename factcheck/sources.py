@@ -2,6 +2,13 @@ import urllib.request
 import urllib.parse
 import json
 import logging
+import threading
+import queue
+
+def call_api(params):
+	url = "https://en.wikipedia.org/w/api.php?%s"	% params
+	with urllib.request.urlopen(url) as f:
+		return json.loads(f.read().decode('utf-8'))
 
 class Wikipedia:
 	api_url = "https://en.wikipedia.org/w/api.php?%s"
@@ -30,10 +37,37 @@ class Wikipedia:
 		page["name"] = target["name"]
 		page["redirect"] = target["redirect"]
 
-		result = self._categorize(page["name"])
-		categories = self._get_categories(result)
-		page["categories"] = categories
-		page["content"] = self._get_extract(page["name"])
+		the_queue = queue.Queue()
+
+		thread_c = threading.Thread(self._categorize(page["name"], the_queue))
+		thread_e = threading.Thread(self._extract(page["name"], the_queue))
+
+		thread_c.start()
+		thread_e.start()
+
+		thread_c.join()
+		thread_e.join()
+
+		categ = None
+		extrc = None
+
+		## HACK HACK HACK
+		result1 = json.loads(the_queue.get())
+		if result1["data_type"] == "categories": categ = result1
+		if result1["data_type"] == "extract": extrc = result1
+
+		result2 = json.loads(the_queue.get())
+		if result2["data_type"] == "categories": categ = result2
+		if result2["data_type"] == "extract": extrc = result2
+
+		page["categories"] = self._get_categories(categ)
+		page["content"] = self._get_extract(extrc)
+
+		# result = self._categorize(page["name"])
+		# categories = self._get_categories(result)
+		# page["categories"] = categories
+		# extracted = self._extract(page["name"])
+		# page["content"] = self._get_extract(extracted)
 		return page
 
 	def _get_pages(self, response, count):
@@ -72,8 +106,8 @@ class Wikipedia:
 			categories.append(cat["title"].split(":")[1])
 		return categories
 
-	def _get_extract(self, page_name):
-		result = self._extract(page_name)
+	def _get_extract(self, extracted):
+		result = extracted
 		pageobjects = result["query"]["pages"]
 		pagenum = next(iter(pageobjects))
 		data = pageobjects[pagenum]
@@ -82,21 +116,23 @@ class Wikipedia:
 	def _search(self, query):
 		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'list': 'search', 'srprop': 'redirecttitle', 'srinfo':'suggestion', 'srsearch': query})
 		url = Wikipedia.api_url	% params
-		return self.__call_api(params)
+		return call_api(params)
 
-	def _categorize(self, page_name):
+	def _categorize(self, page_name, queue_out):
+		logging.info("Starting get data categorize...")
 		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'categories', 'clshow': '!hidden', 'cllimit': '100', 'redirects':'', 'titles': page_name})
-		result = self.__call_api(params)
-		return result
+		result = call_api(params)
+		result["data_type"] = "categories"
+		# return result
+		queue_out.put(json.dumps(result))
 
-	def _extract(self, page_name):
+	def _extract(self, page_name, queue_out):
+		logging.info("Starting get data extract...")
 		params = urllib.parse.urlencode({'format': 'json', 'action': 'query', 'prop': 'extracts', 'exintro': '', 'explaintext': '', 'redirects':'', 'titles': page_name})
-		return self.__call_api(params)
-
-	def __call_api(self, params):
-		url = Wikipedia.api_url	% params
-		with urllib.request.urlopen(url) as f:
-			return json.loads(f.read().decode('utf-8'))
+		result = call_api(params)
+		result["data_type"] = "extract"
+		# return result
+		queue_out.put(json.dumps(result))
 
 def get_postag(sentence):
 	text = nltk.word_tokenize(sentence)
