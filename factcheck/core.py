@@ -42,6 +42,7 @@ class WikipediaCheck:
 	synonyms_assumption = ['if', 'might', 'considered']
 
 	def __init__(self, query):
+		logging.info("Start init Wikipedia object")
 		self.query = self._clean_query(query.lower()).rstrip()
 		self.query_stop = self._stop_query(self.query)
 		self.query_stemmed = self._stem_query(self.query_stop)
@@ -51,25 +52,33 @@ class WikipediaCheck:
 
 		self.about_death = False
 		self.about_clarify = False
+		logging.info("Finish init Wikipedia object")
 
 	def check(self):
+		logging.info("Start checking")
 		cl = self.query
 		ne = self.properties_bne
 		le = self._stop_query(cl).split()
 		st = self._the_stops(cl).split()
 
+		logging.info("Finish init checking")
 		negate = False
 		if self.__is_intersect(WikipediaCheck.synonyms_negation, (self.query).split()):
 			negate = True
+		logging.info("Finish search negation words")
 
 		if (len(self.query_clean.split()) < 4) or \
 			(len(ne) != 0 and len(le) <= 10 and len(st) <= 4):
+			logging.info("Starting...")
 			quer = self._build_query()
 			print("Q: " + quer)
+			logging.info("Finish build query")
 			wiki = sources.Wikipedia(quer, 3)
 			self.result = wiki.results()
+			logging.info("OK, getting results page from Wiki")
 
 			if (len(self.result) > 0):
+				logging.info("Calculations")
 				fact_claims = []
 				found_page = False
 

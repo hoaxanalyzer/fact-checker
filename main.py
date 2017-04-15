@@ -17,7 +17,14 @@ import factcheck
 application = Flask(__name__)
 CORS(application)
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+root.addHandler(ch)
 
 @application.route("/")
 def index():
@@ -30,6 +37,7 @@ def extract_text():
 		wc = factcheck.WikipediaCheck(text)
 		result = {}
 		result["code"], result["details"], result["is_negate"] = wc.check()
+		logging.info("Finish wiki.check")
 		result = json.dumps(result)
 	except Exception as e:
 		result = json.dumps({"status": "Failed", "message": "Incorrect parameters", "details": str(e)})
