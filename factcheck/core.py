@@ -236,15 +236,15 @@ class WikipediaCheck:
 			## DEATH
 			if self.about_death:
 				if "living" in category:
-					return (2, page["name"] + ' is still ' + category)
+					return (1, page["name"] + ' is still ' + category)
 				if "deaths" in category:
-					return (1, page["name"] + ' is ' + category)
+					return (2, page["name"] + ' is ' + category)
 			else:
 				## HOAX
 				if category in WikipediaCheck.hoax_category:
-					return (2, page["name"] + ' defined as ' + category)
+					return (1, page["name"] + ' defined as ' + category)
 				if "hoaxes" in category:
-					return (2, page["name"] + ' defined as ' + category)
+					return (1, page["name"] + ' defined as ' + category)
 
 		return (3, 'Category is safe')
 
