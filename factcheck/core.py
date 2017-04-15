@@ -45,7 +45,9 @@ class WikipediaCheck:
 		logging.info("Start init Wikipedia object")
 		self.query = self._clean_query(query.lower()).rstrip()
 		self.query_stop = self._stop_query(self.query)
+		logging.info("Start stem")
 		self.query_stemmed = self._stem_query(self.query_stop)
+		logging.info("Finish stem")
 		self.query_clean = self._sanitize_query(self.query_stemmed)
 
 		self.properties_bne = self._get_basic_ne(self.query_stop)
@@ -85,7 +87,8 @@ class WikipediaCheck:
 				#for page in self.result:
 				#	if (not found_page) and self._check_title(page):
 
-				page = self.result[self._get_best_title(self.result)]
+				page = wiki.get_meta(self.result[self._get_best_title(self.result)])
+
 				# self._check_content(page)
 				print("Checking: " + str(page["name"]))
 				ccat = self._check_category(page)

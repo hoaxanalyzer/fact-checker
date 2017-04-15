@@ -1,6 +1,7 @@
 import urllib.request
 import urllib.parse
 import json
+import logging
 
 class Wikipedia:
 	api_url = "https://en.wikipedia.org/w/api.php?%s"
@@ -12,17 +13,28 @@ class Wikipedia:
 		pages = self._get_pages(result, count)
 
 		for p, r in pages:
-			result = self._categorize(p)
-			categories = self._get_categories(result)
 			page = {}
 			page["name"] = p
 			page["redirect"] = r
-			page["categories"] = categories
-			page["content"] = self._get_extract(p)
+			#result = self._categorize(p)
+			#categories = self._get_categories(result)
+			#page["categories"] = categories
+			#page["content"] = self._get_extract(p)
 			self.bundle.append(page)
 
 	def results(self):
 		return self.bundle
+
+	def get_meta(self, target):
+		page = {}
+		page["name"] = target["name"]
+		page["redirect"] = target["redirect"]
+
+		result = self._categorize(page["name"])
+		categories = self._get_categories(result)
+		page["categories"] = categories
+		page["content"] = self._get_extract(page["name"])
+		return page
 
 	def _get_pages(self, response, count):
 		pages = []
