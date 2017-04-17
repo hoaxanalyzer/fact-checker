@@ -22,6 +22,7 @@ from nltk.tree import Tree
 ##  1 : Hoax
 ##  2 : Fact
 ##  3 : Unknown
+##  6 : Just info
 ##  7 : Hoax contained sentences
 ##	8 : Neutral sentences, probably facts
 ##  9 : Fact in some claim
@@ -97,7 +98,7 @@ class WikipediaCheck:
 				## No conclusion, check content
 				logging.info("No Conlculsion, Check content")
 				ccon = self._check_content(page)
-				if ccon[0] == 8 or ccon[0] == 7:
+				if ccon[0] == 8 or ccon[0] == 7 or ccon[0] == 6:
 					return ccon + (negate,)
 				found_page = True
 
@@ -190,19 +191,22 @@ class WikipediaCheck:
 		count = 0
 		for page in pages:
 			logging.info("Cekin page: " + str(page))
-			pagename = self._clean_query(page["name"]).split()
+			pagename = self._clean_query(page["name"]).lower().split()
+			print(pagename)
 			in_page = self.__intersect(querywords, [x.lower() for x in pagename])
-			score = len(in_page) / len(pagename)
-			logging.info("Gettin' Score")
+			print(in_page)
+			score = (len(in_page) / len(pagename)) * len(in_page)
+			print(score)
 			if score > highest_score:
 				highest_score = score
 				idx = count
 			if page["redirect"] != None:
-				logging.info("Cekin redirect: " + page["redirect"])
-				rediname = self._clean_query(page["redirect"]).split()
+				rediname = self._clean_query(page["redirect"]).lower().split()
+				print(rediname)
 				re_page = self.__intersect(querywords, [x.lower() for x in rediname])
-				rscore = len(re_page) / len(rediname)
-				logging.info("Gettin' Score")
+				print(re_page)
+				rscore = (len(re_page) / len(rediname)) * len(re_page)
+				print(rscore)
 				if rscore > highest_score:
 					highest_score = rscore
 					idx = count
@@ -231,7 +235,6 @@ class WikipediaCheck:
 		correct_claims = []
 
 		for category in page["categories"]:
-			logging.info("Iterating on " + category)
 			category = category.lower()
 			## DEATH
 			if self.about_death:
@@ -254,6 +257,7 @@ class WikipediaCheck:
 		if len(to_check) >= 2:
 			print("To check content: " + str(to_check))
 			hoax_word = ['hoax', 'discredited']
+			political_fail_word = ['nominee', 'candidate']
 
 			wcontent = page["content"]
 			sentences = sent_tokenize(wcontent)
@@ -267,14 +271,14 @@ class WikipediaCheck:
 						found.append(check)
 				perct = len(found)/len(to_check)
 				if len(self.properties_bne) > 0:
-					if (perct >= 0.6) and \
+					if (perct >= 0.7) and \
 						((len(self.__intersect(self.properties_bne, found))/len(self.properties_bne)) >= 0.3):
 						found_sentences.append(sentence)
 				else:
 					if (perct >= 0.6):
 						found_sentences.append(sentence)
 			if len(found_sentences) > 0:
-				sen_code = 8
+				sen_code = 6
 				## Check for Hoax related words
 				for sentence in found_sentences:
 					if (self.__is_intersect(sentence.split(), hoax_word)):
